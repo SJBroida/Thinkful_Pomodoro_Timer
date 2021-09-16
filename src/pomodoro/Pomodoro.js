@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import classNames from "../utils/class-names";
+import PlayPauseStop from "./PlayPauseStop.js";
+import Progress from "./Progress.js";
 import useInterval from "../utils/useInterval";
 import { minutesToDuration } from "../utils/duration"
-import { secondsToDuration } from "../utils/duration"
 
 // These functions are defined outside of the component to insure they do not have access to state
 // and are, therefore more likely to be pure.
@@ -75,41 +75,6 @@ function Pomodoro() {
   );
 
   /**
-   * Called whenever the play/pause button is clicked.
-   */
-  function playPause() {
-    setIsTimerRunning((prevState) => {
-      const nextState = !prevState;
-      if (nextState) {
-        setSession((prevStateSession) => {
-          // If the timer is starting and the previous session is null,
-          // start a focusing session.
-          if (prevStateSession === null) {
-            return {
-              label: "Focusing",
-              timeRemaining: focusDuration * 60,
-            };
-          }
-          return prevStateSession;
-        });
-      }
-      return nextState;
-    });
-  }
-
-  /**
-   * Called whenever the stop button is clicked
-   */
-  function stopPomodoro() {
-
-    setIsTimerRunning(() => false);
-    setSession(() => null);
-    setFocusDuration(focusDuration);
-    setBreakDuration(breakDuration);
-
-  }
-
-  /**
    * Called whenever the "+" or "-" focus button is pushed
    * @param amount 
    *    the amount to change the duration (positive or negative)
@@ -147,25 +112,6 @@ function Pomodoro() {
     }
   }
 
-  /**
-   * 
-   * @returns 
-   *    either focusDuration or breakDuration depending on what state the session is.
-   */
-  function findSessionDuration() {
-    return (session?.label === "Focusing") ? focusDuration : breakDuration;
-  }
-
-  /**
-   * Calculates what percent of time has passed since timer began.
-   * @returns 
-   *    a number betwee 0 and 100 that represents the percentage of time that has elapsed.
-   */
-  function setProgressBar() {
-    const theProgress = ((1 - (session.timeRemaining/(findSessionDuration() * 60) ) ) * 100);
-    return theProgress;
-  }
-
   // *** No conditioning in the Return Area ***
   return (
     <div className="pomodoro">
@@ -193,7 +139,7 @@ function Pomodoro() {
                 className="btn btn-secondary"
                 data-testid="increase-focus"
                 onClick={() => changeFocus(5)}
-                disable={session}
+                disabled={session}
               >
                 <span className="oi oi-plus" />
               </button>
@@ -234,85 +180,23 @@ function Pomodoro() {
           </div>
         </div>
       </div>
-      <div className="row">
-        <div className="col">
-          <div
-            className="btn-group btn-group-lg mb-2"
-            role="group"
-            aria-label="Timer controls"
-          >
-            <button
-              type="button"
-              className="btn btn-primary"
-              data-testid="play-pause"
-              title="Start or pause timer"
-              onClick={playPause}
-            >
-              <span
-                className={classNames({
-                  oi: true,
-                  "oi-media-play": !isTimerRunning,
-                  "oi-media-pause": isTimerRunning,
-                })}
-              />
-            </button>
-            {/* TODO: Implement stopping the current focus or break session. and disable the stop button when there is no active session */}
-            {/* TODO: Disable the stop button when there is no active session */}
-            <button
-              type="button"
-              className="btn btn-secondary"
-              data-testid="stop"
-              title="Stop the session"
-              onClick={stopPomodoro}
-              disabled={!session}
-            >
-              <span className="oi oi-media-stop" />
-            </button>
-          </div>
-        </div>
-      </div>
-      <div>
-        {/* TODO: This area should show only when there is an active focus or break - i.e. the session is running or is paused */}
-        {/* Solution: Encase entire section of HTML code within ternary operator on condition of session */}
-        {/* This solution was provided with the assistance of a TA */}
-        {session ? (
-          <>
-            <div className="row mb-2">
-              <div className="col">
-                {/* TODO: Update message below to include current session (Focusing or On Break) total duration */}
-                <h2 data-testid="session-title">
-                  {/* Solution is to apply minutesToDuration function to focusDuration */}
-                  {session?.label} for {minutesToDuration(findSessionDuration())} minutes
-                </h2>
-                {/* TODO: Update message below correctly format the time remaining in the current session */}
-                <p className="lead" data-testid="session-sub-title">
-                  {/* Solution is to apply secondsToDuration function to session?.timeRemaining */}
-                  {secondsToDuration(session?.timeRemaining)} remaining
-                </p>
-              </div>
-            </div>
-            {isTimerRunning ? "" : (
-              <>
-                <h2>PAUSED</h2>
-              </>
-            )}
-            <div className="row mb-2">
-              <div className="col">
-                <div className="progress" style={{ height: "20px" }}>
-                  <div
-                    className="progress-bar"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow={setProgressBar()} // TODO: Increase aria-valuenow as elapsed time increases
-                    style={{ width: `${setProgressBar()}%` }} // TODO: Increase width % as elapsed time increases
-                  />
-                </div>
-              </div>
-            </div>
-          </>
-        ) : ""} {/*End of Ternary Operator*/}
-      </div>
+      <PlayPauseStop 
+        isTimerRunning={isTimerRunning}
+        setIsTimerRunning={setIsTimerRunning}
+        session={session}
+        setSession={setSession}
+        focusDuration={focusDuration}
+        setFocusDuration={setFocusDuration}
+        breakDuration={breakDuration}
+        setBreakDuration={setBreakDuration}
+      />
+      <Progress 
+        isTimerRunning={isTimerRunning} 
+        session={session} 
+        focusDuration={focusDuration} 
+        breakDuration={breakDuration}
+      />
+      {/* End of Div with className Pomodoro */}
     </div>
   );
 }
